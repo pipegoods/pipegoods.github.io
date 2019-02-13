@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/ico" href="img/favicon.ico" />
+    <link rel="manifest" href="manifest.json" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sistemas Operativos - Andres Vizcaino</title>
+    <script src="js/vue.js"></script>
+    <link rel="stylesheet" href="css/materialize.min.css">
+    <script src="js/materialize.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="js/sw.js"></script>
+
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper #81c784 green lighten-2">
+          <a href="https://twitter.com/pipegoods" class="brand-logo center">Andrés Vizcaíno</a>
+          
+        </div>
+    </nav>
+    <div class="divider"></div>
+    <div id="app">
+        <div class="container">
+            <div class="row">
+                <div class="col s12 m6 l4">
+                    <!-- Agregar procesos -->
+                    <h4>Agrega un nuevo proceso:</h4>
+                    <br>
+                    <div class="input-field">
+                        <input id="nombre_proceso" type="text" v-model="proceso.nombre">
+                        <label for="nombre_proceso">Nombre del proceso</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="tiempo_llegada" type="number" min="0" v-model.number="proceso.tllegada">
+                        <label for="tiempo_llegada">Tiempo de llegada</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="tiempo_cpu" type="number" min="0" v-model.number="proceso.tcpu">
+                        <label for="tiempo_cpu">Tiempo de CPU</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="prioridad" type="number" min="0" v-model.number="proceso.prioridad">
+                        <label for="prioridad">Prioridad (menor valor mayor prioridad)</label>
+                    </div>
+                    <div class="center-align">
+                        <button class="waves-effect waves-light btn #81c784 green lighten-2" v-on:click="agregarProceso">Agregar</button>
+                    </div>
+                </div>
+               
+                <div class="col s12 m6 l8">
+                        <div class="card #81c784 green lighten-2" v-if="lista_procesos.length != 0">
+                                <div class="card-content">
+                                        <ul  class="collection">
+                                            <li v-for="pro in lista_procesos" class="collection-item">
+                                                <div>
+                                                    <span>{{pro.nombre}}</span>
+                                                    <span class="new badge blue" data-badge-caption=":Tiempo llegada">{{pro.tllegada}}</span>
+                                                    <span class="new badge green" data-badge-caption=":Tiempo CPU">{{pro.tcpu}}</span>
+                                                    <span class="new badge grey" data-badge-caption=":Prioridad">{{pro.prioridad}}</span>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                </div>
+                            </div>
+                        <div class="row" v-if="lista_procesos.length === 0">
+                            <br><br><br>
+                            <div class="card #81c784 green lighten-2">
+                                <div class="card-content white-text">
+                                    <span class="card-title">Estoy esperando nuevos procesos :)</span>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12 m12 l12">
+                    <h4>Prioridad apropiativa</h4>
+                        <table class="striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tiempo Comienzo</th>
+                                    <th>Tiempo Fin</th>
+                                    <th>Tiempo Espera</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="pro in lista_prioridad_si">
+                                    <td>{{pro.nombre}}</td>
+                                    <td>{{pro.tcom}}</td>
+                                    <td>{{pro.tfin}}</td>
+                                    <td>{{pro.tesp}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        
+                    <ul class="pagination ">
+                        <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+                        <li class="active #81c784 green lighten-2" v-for="pro in linea3"><a href="#!">{{pro}}</a></li>
+
+                        <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+                    </ul>
+                </div>
+                <div class="col s12 m12 l12">
+                    <h4>Prioridad no apropiativa</h4>
+                    <table class="striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tiempo Comienzo</th>
+                                <th>Tiempo Fin</th>
+                                <th>Tiempo Espera</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="pro in lista_prioridad_no">
+                                <td>{{pro.nombre}}</td>
+                                <td>{{pro.tiempoC}}</td>
+                                <td>{{pro.tiempoF}}</td>
+                                <td>{{pro.tiempoE}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                        
+                    <ul class="pagination ">
+                        <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+                        <li class="active #81c784 green lighten-2" v-for="pro in lista_prioridad_no"><a href="#!">{{pro.nombre}}</a></li>
+
+                        <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+                    </ul>
+                </div>
+                <div class="col s12 m12 l12">
+                    <h4>SRTF</h4>
+                        <table  class="striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tiempo Comienzo</th>
+                                    <th>Tiempo Fin</th>
+                                    <th>Tiempo Espera</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="pro in lista_srtf">
+                                    <td>{{pro.nombre}}</td>
+                                    <td>{{pro.tcom}}</td>
+                                    <td>{{pro.tfin}}</td>
+                                    <td>{{pro.tesp}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        
+                    <ul class="pagination ">
+                        <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+                        <li class="active #81c784 green lighten-2" v-for="pro in linea1"><a href="#!">{{pro}}</a></li>
+
+                        <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                lista_procesos: [],
+                proceso: {},
+                lista_srtf: [],
+                lista_prioridad_no: [],
+                lista_prioridad_si: [],
+                linea1: [],
+                linea2: [],
+                linea3: []
+            },
+            methods: {
+                agregarProceso: function() {
+                    
+                    if(this.lista_procesos.length < 5){
+                        this.lista_procesos.push(this.proceso);
+                        M.toast({html: 'Proceso ' + this.proceso.nombre + ' fue agregado!'})
+                        this.srtf();
+                        this.prioridad_no();
+                        this.prioridad_si();
+                    } else {
+                        M.toast({html: 'Lista de procesos completa! max 5'})
+                    }
+                    this.proceso = {};
+                    
+                    if(this.lista_procesos.length >=2 && this.lista_procesos.length <=5){
+                        this.prioridad_no();
+                        this.srtf();
+                        
+                    }
+                },
+                srtf: function() {
+                    this.lista_srtf = [];
+                    let lista_aux = [];
+                    this.linea1 = [];
+                    this.lista_procesos.forEach(pro=>{
+                        lista_aux.push({
+                            nombre: pro.nombre,
+                            tllegada: pro.tllegada,
+                            tcpu: pro.tcpu
+                        });
+                    });
+                    let tiempoT = 0;
+                    let lista_aux2 = [];
+                    lista_aux.forEach(pro => {
+                        tiempoT += pro.tcpu;
+                        this.lista_srtf.push({
+                            nombre: pro.nombre,
+                            tllegada: pro.tllegada,
+                            tcpu: pro.tcpu,
+                            tcom: [],
+                            tfin: [],
+                            tesp: 0
+                        });
+                    });
+                    let aux_pro;
+                    let mini = 9999;
+                    let pro_ON;
+                    for (let index = 0; index < tiempoT; index++) {
+                        mini = 9999
+                        lista_aux2 = [];
+                        lista_aux.forEach(pro => {
+                            if (pro.tllegada <= index && pro.tcpu != 0) {
+                                lista_aux2.push(pro);
+                            }
+                        });
+                        
+                        lista_aux2.forEach(pro => {
+                            if (pro.tcpu < mini) {
+                                mini = pro.tcpu;
+                                aux_pro = pro.nombre;
+                            }
+                        });
+
+                        lista_aux.forEach(pro => {
+                            if(pro.nombre == aux_pro){
+                                if (pro_ON == pro.nombre) {
+                                    pro.tcpu--;
+                                } else {
+                                    this.lista_srtf.forEach(p => {
+                                        if (p.nombre == pro.nombre) {
+                                            p.tcom.push(index);
+                                        }
+                                        if (pro_ON == p.nombre) {
+                                            p.tfin.push(index);
+                                        }
+                                    });
+                                    pro_ON = pro.nombre;
+                                    
+                                    pro.tcpu--;
+                                } 
+                            }
+                        });
+                        
+                        if (tiempoT == index + 1) {
+                            this.lista_srtf.forEach(p => {
+                                if (aux_pro == p.nombre) {
+                                    p.tfin.push(index+1);
+                                }
+                            });
+                        }
+                        this.linea1.push(pro_ON);
+                    }
+
+                    let retorno = 0;
+                    let a_ = 0;
+                    this.lista_srtf.forEach(pro => {
+                        retorno = pro.tfin[pro.tfin.length - 1] - pro.tllegada;
+                        for (let index = 0; index < pro.tcom.length; index++) {
+                           a_ += pro.tfin[index] - pro.tcom[index];
+                        }
+                        pro.tesp = retorno - a_;
+                        retorno = 0;
+                        a_ = 0;
+                    });
+
+                    
+                    
+                },
+                prioridad_no : function() {
+                    this.lista_prioridad_no = [];
+                    var lista_x = this.lista_procesos.slice();
+                    var lista_2 = [];
+                    var lista_3 = [];
+                    var tiempoT = 0;
+                    this.lista_procesos.forEach(pro => {
+                        tiempoT += pro.tcpu;
+                    });
+
+                    var tiempo = 0;
+                    
+                    while (tiempo < tiempoT) {
+                        
+                        lista_3 = [];
+                        lista_x.forEach(function (pro, i) {
+                            if (pro.tllegada === tiempo) {
+                                lista_3.push({
+                                    nombre: pro.nombre,
+                                    tcpu: pro.tcpu,
+                                    tllegada: pro.tllegada,
+                                    prioridad: pro.prioridad
+                                });
+                            }    
+                        });
+                        if (lista_3.length > 1) {
+                            lista_3.sort(function (a, b) {
+                                if (a.prioridad > b.prioridad) {
+                                    return 1;
+                                }
+                                if (a.prioridad < b.prioridad) {
+                                    return -1;
+                                }
+                                return 0;
+                            });
+                            
+                            lista_3.forEach(pro => {
+                                lista_2.push({
+                                    nombre: pro.nombre,
+                                    tcpu: pro.tcpu,
+                                    tllegada: pro.tllegada,
+                                    prioridad: pro.prioridad
+                                });
+                            });
+                        } else if (lista_3.length === 1) {
+                            lista_3.forEach(pro => {
+                                lista_2.push({
+                                    nombre: pro.nombre,
+                                    tcpu: pro.tcpu,
+                                    tllegada: pro.tllegada,
+                                    prioridad: pro.prioridad
+                                });
+                            });
+                        }
+                            
+                        if (lista_2.length === lista_x.length) {
+                            break;
+                        }
+                        tiempo++;
+                    }
+                    var tiempoA = 0;
+                    lista_2.forEach(element => {
+                        this.lista_prioridad_no.push({
+                            nombre: element.nombre,
+                            tiempoC: tiempoA,
+                            tiempoF: tiempoA + element.tcpu,
+                            tiempoE: tiempoA - element.tllegada
+                        });
+
+                        tiempoA += element.tcpu;
+                    });        
+                },
+                prioridad_si: function(){
+                    this.lista_prioridad_si = [];
+                    let aux = [];
+                    this.linea3 = [];
+                    this.lista_procesos.forEach(pro=>{
+                        aux.push({
+                            nombre: pro.nombre,
+                            tllegada: pro.tllegada,
+                            tcpu: pro.tcpu,
+                            prioridad: pro.prioridad
+                        });
+                    });
+                    let tiempoT = 0;
+                    this.lista_prioridad_si = [];
+                    let lista_aux2 = [];
+                    aux.forEach(pro => {
+                        tiempoT += pro.tcpu;
+                        this.lista_prioridad_si.push({
+                            nombre: pro.nombre,
+                            tllegada: pro.tllegada,
+                            tcpu: pro.tcpu,
+                            tcom: [],
+                            tfin: [],
+                            tesp: 0
+                        });
+                    });
+                    let aux_pro;
+                    let mini = 9999;
+                    let pro_ON;
+                    for (let index = 0; index < tiempoT; index++) {
+                        mini_pro = 9999
+                        lista_aux2 = [];
+                        aux.forEach(pro => {
+                            if (pro.tllegada <= index && pro.tcpu != 0) {
+                                lista_aux2.push(pro);
+                            }
+                        });
+                        
+                        lista_aux2.forEach(pro => {
+                            if (pro.prioridad < mini_pro) {
+                                mini_pro = pro.prioridad;
+                                aux_pro = pro.nombre;
+                            }
+                        });
+
+                        aux.forEach(pro => {
+                            if(pro.nombre == aux_pro){
+                                if (pro_ON == pro.nombre) {
+                                    pro.tcpu--;
+                                } else {
+                                    this.lista_prioridad_si.forEach(p => {
+                                        if (p.nombre == pro.nombre) {
+                                            p.tcom.push(index);
+                                        }
+                                        if (pro_ON == p.nombre) {
+                                            p.tfin.push(index);
+                                        }
+                                    });
+                                    pro_ON = pro.nombre;
+                                    pro.tcpu--;
+                                } 
+                            }
+                        });
+                        
+                        if (tiempoT == index + 1) {
+                            this.lista_prioridad_si.forEach(p => {
+                                if (aux_pro == p.nombre) {
+                                    p.tfin.push(index+1);
+                                }
+                            });
+                        }
+
+                        this.linea3.push(pro_ON);
+                    }
+
+                    let retorno = 0;
+                    let a_ = 0;
+                    this.lista_prioridad_si.forEach(pro => {
+                        retorno = pro.tfin[pro.tfin.length - 1] - pro.tllegada;
+                        for (let index = 0; index < pro.tcom.length; index++) {
+                           a_ += pro.tfin[index] - pro.tcom[index];
+                        }
+                        pro.tesp = retorno - a_;
+                        retorno = 0;
+                        a_ = 0;
+                    });
+
+           
+                    
+                    
+                }
+            }
+        });
+
+    
+
+        
+    </script>   
+<script>
+    // Check that service workers are registered
+    if ('serviceWorker' in navigator) {
+      // Use the window load event to keep the page load performant
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+    </script>
+    
+</body>
+</html>
